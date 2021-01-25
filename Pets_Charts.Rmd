@@ -1,0 +1,278 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+location='https://github.com/rjtaylorUW/PUBPOL543/raw/main/'
+
+file="Seattle_Pet_Licenses%20CLEANED.xlsx"
+fileLink=paste0(location,file)
+```
+
+```{r}
+library(rio)
+pets=import(fileLink)
+```
+
+```{r}
+library(ggplot2)
+names(pets)
+```
+
+```{r}
+head(pets$Species,1)
+```
+
+```{r}
+absoluteSpecies=table(pets$Species,exclude='nothing')
+absoluteSpecies
+```
+
+```{r}
+#don't run this one
+names(absoluteSpecies)[4]='Unknown'
+```
+
+```{r}
+SpeciesPlot=prop.table(absoluteSpecies)*100
+SpeciesPlot
+```
+
+```{r}
+tableFreq=as.data.frame(SpeciesPlot)
+names(tableFreq)=c("Species","Percent")
+tableFreq
+```
+
+```{r}
+ggplot(tableFreq, aes(x = "", y = Percent, fill = Species)) +
+  geom_col(width = 1) + 
+  coord_polar(theta = "y") +
+  xlab(NULL)
+```
+
+
+```{r}
+tableFreq=as.data.frame(SpeciesPlot)
+names(tableFreq)=c("Species","Percent")
+tableFreq
+
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+base= ggplot(data = tableFreq, 
+             aes(x = Species,
+                 y = Percent)) 
+```
+
+```{r}
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') 
+plot1
+```
+
+```{r}
+titleText='Seattle Pets Adoption Over the Years'
+sourceText='Source: Seattle Animal Shelter'
+
+plot2 = plot1 + labs(title=titleText,
+                     x =NULL, 
+                     y = NULL,
+                     caption = sourceText)
+plot2
+```
+
+```{r}
+plot3 = plot2 + geom_hline(yintercept = 25, #where
+                           linetype="dashed", 
+                           size=1.5, #thickness
+                           alpha=0.5) #transparency
+plot3
+```
+
+```{r}
+library(scales) # for "unit_format""
+
+# customize Y axis
+plot4 = plot3 + scale_y_continuous(breaks=c(0,20,40,60,80),
+                                   limits = c(0, 70), 
+                                   labels=unit_format(suffix = '%')) 
+plot4
+```
+
+```{r}
+plot5 = plot4 + theme(plot.caption = element_text(hjust = 0), 
+                      plot.title = element_text(hjust = 0.5))
+plot5
+```
+
+```{r}
+paste0(round(tableFreq$Percent,2), '%')
+```
+
+```{r}
+LABELS=paste0(round(tableFreq$Percent,2), '%')
+plot6 = plot5 + geom_text(vjust=0, #hjust if flipping
+                          size = 3,
+                          aes(y = Percent ,
+                              label = LABELS))
+```
+
+```{r}
+tableFreq=tableFreq[order(tableFreq$Percent),]
+# then:
+tableFreq
+```
+```{r}
+Species0rd=tableFreq[order(tableFreq$Percent),'Species']
+```
+
+```{r}
+LABELS=paste0(round(tableFreq$Percent,2), '%')
+
+base= ggplot(data = tableFreq, 
+             aes(x = Species,
+                 y = Percent)) 
+
+## adding these to base
+base= base + scale_x_discrete(limits=Species0rd) 
+base= base + theme_classic()
+##
+
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') 
+plot2 = plot1 + labs(title=titleText,
+                     x =NULL, 
+                     y = NULL,
+                     caption = sourceText)
+plot3 = plot2 + geom_hline(yintercept = 25, 
+                           linetype="dashed", 
+                           size=1.5, 
+                           alpha=0.5)
+plot4 = plot3 + scale_y_continuous(breaks=c(0,20,40,60,80),
+                                 limits = c(0, 70), # expand = c(0, 0),
+                                 labels=scales::unit_format(suffix = '%')) 
+
+plot5 = plot4 + theme(plot.caption = element_text(hjust = 0),
+                      plot.title = element_text(hjust = 0.5))
+
+
+plot6 = plot5 + geom_text(vjust=1, #hjust if flipping
+                          size = 4,#fontface = "bold",
+                          aes(y = Percent ,
+                              label = LABELS))
+plot6 #+ coord_flip() # wanna flip the plot?
+```
+```{r}
+#familiar
+base = ggplot(tableFreq, aes(x=Species,Percent)) + theme_classic()
+base = base + scale_x_discrete(limits=Species0rd) 
+#new:geom_segment
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = Species, 
+                                   yend = Percent, 
+                                   xend = Species), 
+                               color = "grey50") 
+lolliplot1
+```
+
+```{r}
+lolliplot2=lolliplot1 + geom_point()
+lolliplot2
+```
+
+```{r}
+tableFreq$gap=tableFreq$Percent-25
+tableFreq
+```
+
+```{r}
+base = ggplot(tableFreq, aes(x=Species,
+                             y=gap)) #change
+base = base + theme_classic()
+base = base + scale_x_discrete(limits=Species0rd)
+
+lolliplot1=base + geom_segment(aes(y = 0,
+                                   yend = gap, #change
+                                   x = Species,
+                                   xend = Species), 
+                               color = "gray") 
+lolliplot2 = lolliplot1 + geom_point()
+lolliplot2 
+```
+
+```{r}
+tableFreq$PositiveGap=ifelse(tableFreq$gap>0,T,F)
+tableFreq
+```
+
+```{r}
+base = ggplot(tableFreq, aes(x=Species,y=gap,
+                              color=PositiveGap))#here 
+base = base + theme_classic()
+base= base + scale_x_discrete(limits=Species0rd)
+
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   yend = gap, 
+                                   x = Species, 
+                                   xend = Species), 
+                               color = "gray") 
+ 
+lolliplot2 = lolliplot1 + geom_point()
+
+lolliplot2 
+```
+
+```{r}
+base = ggplot(tableFreq, aes(x=Species,y=gap,
+                             color=PositiveGap,
+                             label = round(gap,3))) #label
+
+base = base + theme_classic()
+base= base + scale_x_discrete(limits=Species0rd)
+
+lolliplot1=base + geom_segment(aes(y = 0, yend = gap, 
+                                   x = Species, xend = Species), 
+                               color = "gray") 
+
+lolliplot2=lolliplot1 + geom_point() 
+
+lolliplot2 + geom_text() 
+```
+
+```{r}
+lolliplot3= lolliplot2 + geom_text(nudge_x=0.3,
+                                   show.legend = FALSE) 
+lolliplot3
+```
+```{r}
+lolliplot4 = lolliplot3 + geom_hline(yintercept = 0)
+lolliplot4
+```
+
+```{r}
+lolliplot5 = lolliplot4 + theme(axis.ticks.y = element_blank(),
+                                axis.title.y = element_blank(),
+                                axis.line.y = element_blank(),
+                                axis.text.y = element_blank())
+lolliplot5
+```
+```{r}
+lolliplot6=lolliplot5 + theme(axis.ticks.x = element_blank(),
+                                axis.title.x = element_blank(),
+                                axis.line.x = element_blank()
+                              )
+lolliplot6
+```
+
+```{r}
+lolliplot7= lolliplot6 + theme(legend.position = c(0.8,0.4),
+                               legend.background = element_rect(fill='grey90'))
+lolliplot7
+```
+
